@@ -1,3 +1,8 @@
+#include "dtb.h"
+// temporarilly here until I find a better place
+#define KERNBASE hw_mem_start
+#define PHYSTOP (KERNBASE + hw_mem_size)
+
 struct buf;
 struct context;
 struct file;

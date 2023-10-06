@@ -1,5 +1,8 @@
+include CONFIG
+
 K=kernel
 U=user
+D=dt
 
 OBJS = \
   $K/entry.o \
@@ -28,7 +31,9 @@ OBJS = \
   $K/sysfile.o \
   $K/kernelvec.o \
   $K/plic.o \
-  $K/virtio_disk.o
+  $K/virtio_disk.o \
+  $K/dtb.o \
+  $D/hw.o
 
 # riscv64-unknown-elf- or riscv64-linux-gnu-
 # perhaps in /opt/riscv/bin
@@ -53,10 +58,12 @@ QEMU = qemu-system-riscv64
 CC = $(TOOLPREFIX)gcc
 AS = $(TOOLPREFIX)gas
 LD = $(TOOLPREFIX)ld
+DTC = dtc
 OBJCOPY = $(TOOLPREFIX)objcopy
 OBJDUMP = $(TOOLPREFIX)objdump
 
 CFLAGS = -Wall -Werror -O -fno-omit-frame-pointer -ggdb -gdwarf-2
+CFLAGS += -fPIC
 CFLAGS += -MD
 CFLAGS += -mcmodel=medany
 CFLAGS += -ffreestanding -fno-common -nostdlib -mno-relax
@@ -83,6 +90,12 @@ $U/initcode: $U/initcode.S
 	$(LD) $(LDFLAGS) -N -e start -Ttext 0 -o $U/initcode.out $U/initcode.o
 	$(OBJCOPY) -S -O binary $U/initcode.out $U/initcode
 	$(OBJDUMP) -S $U/initcode.o > $U/initcode.asm
+
+$D/hw.dtb: $D/$(TARGET).dts
+	$(DTC) -o $@ $<
+
+$D/hw.o: $D/hw.dtb
+	$(OBJCOPY) -I binary -O elf64-littleriscv -B riscv:rv64 $< $@
 
 tags: $(OBJS) _init
 	etags *.S *.c
@@ -133,7 +146,8 @@ UPROGS=\
 	$U/_wc\
 	$U/_zombie\
 	$U/_pingpong\
-	$U/_free
+	$U/_free\
+	$U/_grow1
 
 fs.img: mkfs/mkfs README $(UPROGS)
 	mkfs/mkfs fs.img README $(UPROGS)
@@ -146,7 +160,8 @@ clean:
 	$U/initcode $U/initcode.out $K/kernel fs.img \
 	mkfs/mkfs .gdbinit \
         $U/usys.S \
-	$(UPROGS)
+	$(UPROGS) \
+	$D/hw.dtb
 
 # try to generate a unique GDB port
 GDBPORT = $(shell expr `id -u` % 5000 + 25000)

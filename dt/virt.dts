@@ -1,0 +1,12 @@
+/dts-v1/;
+/ {
+	model = "virtual RISC-V";
+	#address-cells = <2>;
+	#size-cells = <2>;
+
+	memory@0 {
+		device_type = "memory";
+		reg = <0x0 0x80000000 0x0 0x08000000>;
+	};
+
+};

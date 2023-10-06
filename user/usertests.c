@@ -17,8 +17,8 @@
 // prints "OK".
 //
 
+#define KERNBASE 0x80000000
 #define BUFSZ  ((MAXOPBLOCKS+2)*BSIZE)
-
 char buf[BUFSZ];
 
 //

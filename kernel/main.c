@@ -1,6 +1,7 @@
 #include "types.h"
 #include "param.h"
 #include "memlayout.h"
+#include "dtb.h"
 #include "riscv.h"
 #include "defs.h"
 
@@ -16,6 +17,7 @@ main()
     printf("\n");
     printf("xv6 kernel is booting\n");
     printf("\n");
+    dtb_early_process();  // obtain memory info from device tree
     kinit();         // physical page allocator
     kvminit();       // create kernel page table
     kvminithart();   // turn on paging
