@@ -681,3 +681,30 @@ procdump(void)
     printf("\n");
   }
 }
+
+static void
+_show_page_table(pagetable_t pt, uint64 vaddr, int level)
+{
+  for (int i=0; i <= PXMASK; i++) {
+    pte_t *pte = &pt[i];
+    uint64 vaddr2 = vaddr | ((uint64) i << PXSHIFT(level));
+    pagetable_t paddr = (pagetable_t) PTE2PA(*pte);
+    if (*pte & PTE_V) {
+      for (int j=0; j < (2 - level); j++)
+        printf("\t");
+
+      printf("level %d entry %d: %p -> %p\n", level, i, vaddr2, paddr);
+
+      if (level > 0) {
+          _show_page_table(paddr, vaddr2, level - 1);
+      }
+    }
+  }
+}
+
+void
+show_page_table(void)
+{
+  struct proc *p = myproc();
+  _show_page_table(p->pagetable, 0, 2);
+}

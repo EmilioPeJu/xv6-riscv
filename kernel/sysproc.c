@@ -89,3 +89,10 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+
+uint64
+sys_showpt(void)
+{
+  show_page_table();
+  return 0;
+}
