@@ -10,27 +10,24 @@
 #include "defs.h"
 #include "dtb.h"
 
+#include "kalloc.h"
+
 void freerange(void *pa_start, void *pa_end);
 
 extern char end[]; // first address after kernel.
                    // defined by kernel.ld.
 
-struct run {
-  struct run *next;
-};
-
-struct {
-  struct spinlock lock;
-  struct run *freelist;
-  uint64 n_free_pages;
-} kmem;
+struct kmem_struct kmem;
 
 void
 kinit()
 {
+  kmem = (struct kmem_struct) {
+    .n_free_pages = 0,
+    .start = (void *) PGROUNDUP((uint64) end)
+  };
   initlock(&kmem.lock, "kmem");
-  kmem.n_free_pages = 0;
-  freerange(end, (void*)PHYSTOP);
+  freerange(kmem.start, (void*)PHYSTOP);
 }
 
 void

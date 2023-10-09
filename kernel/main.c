@@ -4,6 +4,9 @@
 #include "dtb.h"
 #include "riscv.h"
 #include "defs.h"
+#ifdef TEST
+  #include "tests.h"
+#endif
 
 volatile static int started = 0;
 
@@ -18,6 +21,9 @@ main()
     printf("xv6 kernel is booting\n");
     printf("\n");
     dtb_early_process();  // obtain memory info from device tree
+#ifdef TEST
+    run_tests();
+#endif
     kinit();         // physical page allocator
     kvminit();       // create kernel page table
     kvminithart();   // turn on paging

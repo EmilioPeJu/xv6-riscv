@@ -3,6 +3,7 @@ include CONFIG
 K=kernel
 U=user
 D=dt
+T=unity/src
 
 OBJS = \
   $K/entry.o \
@@ -35,6 +36,13 @@ OBJS = \
   $K/dtb.o \
   $D/hw.o
 
+ifdef TEST
+OBJS += $K/kalloc_tests.o
+OBJS += $K/tests.o
+OBJS += $T/unity.o
+endif
+
+
 # riscv64-unknown-elf- or riscv64-linux-gnu-
 # perhaps in /opt/riscv/bin
 #TOOLPREFIX = 
@@ -63,11 +71,14 @@ OBJCOPY = $(TOOLPREFIX)objcopy
 OBJDUMP = $(TOOLPREFIX)objdump
 
 CFLAGS = -Wall -Werror -O -fno-omit-frame-pointer -ggdb -gdwarf-2
+ifdef TEST
+  CFLAGS += -DTEST=1 -DUNITY_INCLUDE_CONFIG_H=1
+endif
 CFLAGS += -fPIC
 CFLAGS += -MD
 CFLAGS += -mcmodel=medany
 CFLAGS += -ffreestanding -fno-common -nostdlib -mno-relax
-CFLAGS += -I.
+CFLAGS += -I. -I$T
 CFLAGS += $(shell $(CC) -fno-stack-protector -E -x c /dev/null >/dev/null 2>&1 && echo -fno-stack-protector)
 
 # Disable PIE when possible (for Ubuntu 16.10 toolchain)
@@ -161,7 +172,8 @@ clean:
 	mkfs/mkfs .gdbinit \
         $U/usys.S \
 	$(UPROGS) \
-	$D/hw.dtb
+	$D/hw.dtb \
+	$T/*.o
 
 # try to generate a unique GDB port
 GDBPORT = $(shell expr `id -u` % 5000 + 25000)
@@ -174,6 +186,7 @@ CPUS := 3
 endif
 
 QEMUOPTS = -machine virt -bios none -kernel $K/kernel -m 128M -smp $(CPUS) -nographic
+QEMUOPTS += -s
 QEMUOPTS += -global virtio-mmio.force-legacy=false
 QEMUOPTS += -drive file=fs.img,if=none,format=raw,id=x0
 QEMUOPTS += -device virtio-blk-device,drive=x0,bus=virtio-mmio-bus.0
