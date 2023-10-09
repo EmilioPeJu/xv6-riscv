@@ -30,7 +30,7 @@ void            bunpin(struct buf*);
 // console.c
 void            consoleinit(void);
 void            consoleintr(int);
-void            consputc(int);
+int             consputc(int);
 
 // exec.c
 int             exec(char*, char**);
@@ -87,7 +87,7 @@ int             piperead(struct pipe*, uint64, int);
 int             pipewrite(struct pipe*, uint64, int);
 
 // printf.c
-void            printf(char*, ...);
+int             printf(const char*, ...);
 void            panic(char*) __attribute__((noreturn));
 void            printfinit(void);
 

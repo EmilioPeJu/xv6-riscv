@@ -25,11 +25,12 @@ static struct {
 
 static char digits[] = "0123456789abcdef";
 
-static void
+static int
 printint(int xx, int base, int sign)
 {
   char buf[16];
   int i;
+  int count = 0;
   uint x;
 
   if(sign && (sign = xx < 0))
@@ -42,30 +43,37 @@ printint(int xx, int base, int sign)
     buf[i++] = digits[x % base];
   } while((x /= base) != 0);
 
-  if(sign)
+  if(sign) {
     buf[i++] = '-';
+  }
 
   while(--i >= 0)
-    consputc(buf[i]);
+    count += consputc(buf[i]);
+
+  return count;
 }
 
-static void
+static int
 printptr(uint64 x)
 {
   int i;
-  consputc('0');
-  consputc('x');
+  int count = 0;
+  count += consputc('0');
+  count += consputc('x');
   for (i = 0; i < (sizeof(uint64) * 2); i++, x <<= 4)
-    consputc(digits[x >> (sizeof(uint64) * 8 - 4)]);
+    count += consputc(digits[x >> (sizeof(uint64) * 8 - 4)]);
+
+  return count;
 }
 
 // Print to the console. only understands %d, %x, %p, %s.
-void
-printf(char *fmt, ...)
+int
+printf(const char *fmt, ...)
 {
   va_list ap;
   int i, c, locking;
   char *s;
+  int count = 0;
 
   locking = pr.locking;
   if(locking)
@@ -77,7 +85,7 @@ printf(char *fmt, ...)
   va_start(ap, fmt);
   for(i = 0; (c = fmt[i] & 0xff) != 0; i++){
     if(c != '%'){
-      consputc(c);
+      count += consputc(c);
       continue;
     }
     c = fmt[++i] & 0xff;
@@ -85,27 +93,29 @@ printf(char *fmt, ...)
       break;
     switch(c){
     case 'd':
-      printint(va_arg(ap, int), 10, 1);
+      count += printint(va_arg(ap, int), 10, 1);
       break;
     case 'x':
-      printint(va_arg(ap, int), 16, 1);
+      count += printint(va_arg(ap, int), 16, 1);
       break;
     case 'p':
-      printptr(va_arg(ap, uint64));
+      count += printptr(va_arg(ap, uint64));
       break;
     case 's':
-      if((s = va_arg(ap, char*)) == 0)
+      if((s = va_arg(ap, char*)) == 0) {
         s = "(null)";
+        count += 5;
+      }
       for(; *s; s++)
-        consputc(*s);
+        count += consputc(*s);
       break;
     case '%':
-      consputc('%');
+      count += consputc('%');
       break;
     default:
       // Print unknown % sequence to draw attention.
-      consputc('%');
-      consputc(c);
+      count += consputc('%');
+      count += consputc(c);
       break;
     }
   }
@@ -113,6 +123,8 @@ printf(char *fmt, ...)
 
   if(locking)
     release(&pr.lock);
+
+  return count;
 }
 
 void
