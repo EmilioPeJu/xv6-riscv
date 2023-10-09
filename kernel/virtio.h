@@ -1,4 +1,6 @@
-//
+#ifndef _VIRTIO_H_
+#define _VIRTIO_H_
+
 // virtio device definitions.
 // for both the mmio interface, and virtio descriptors.
 // only tested with qemu.
@@ -94,3 +96,5 @@ struct virtio_blk_req {
   uint32 reserved;
   uint64 sector;
 };
+
+#endif

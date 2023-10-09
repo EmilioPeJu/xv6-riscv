@@ -1,4 +1,9 @@
+#ifndef _DEFS_H_
+#define _DEFS_H_
+
 #include "dtb.h"
+#include "riscv.h"
+
 // temporarilly here until I find a better place
 #define KERNBASE hw_mem_start
 #define PHYSTOP (KERNBASE + hw_mem_size)
@@ -193,3 +198,5 @@ void            virtio_disk_intr(void);
 
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))
+
+#endif
