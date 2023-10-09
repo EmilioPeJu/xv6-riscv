@@ -695,7 +695,7 @@ _show_page_table(pagetable_t pt, uint64 vaddr, int level)
 
       printf("level %d entry %d: %p -> %p\n", level, i, vaddr2, paddr);
 
-      if (level > 0) {
+      if (level > 0 && ((*pte & (PTE_R | PTE_W | PTE_X)) == 0)) {
           _show_page_table(paddr, vaddr2, level - 1);
       }
     }
