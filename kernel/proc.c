@@ -15,6 +15,7 @@ struct proc *initproc;
 int nextpid = 1;
 struct spinlock pid_lock;
 
+extern pagetable_t kernel_pagetable;
 extern void forkret(void);
 static void freeproc(struct proc *p);
 
@@ -703,8 +704,16 @@ _show_page_table(pagetable_t pt, uint64 vaddr, int level)
 }
 
 void
-show_page_table(void)
+show_proc_page_table(void)
 {
   struct proc *p = myproc();
+  printf("Process page table:\n");
   _show_page_table(p->pagetable, 0, 2);
+}
+
+void
+show_kernel_page_table(void)
+{
+  printf("Kernel page table:\n");
+  _show_page_table(kernel_pagetable, 0, 2);
 }

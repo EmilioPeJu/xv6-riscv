@@ -6,6 +6,8 @@
 #include "defs.h"
 #include "fs.h"
 
+// is it aligned to a super-page?
+#define IS_ALIGNED_SPG(a) ((a & (SPGSIZE - 1)) == 0)
 /*
  * the kernel's page table.
  */
@@ -125,14 +127,67 @@ walkaddr(pagetable_t pagetable, uint64 va)
   return pa;
 }
 
+static int
+mappage(pagetable_t pagetable, uint64 va, uint64 pa, int perm)
+{
+  if (va >= MAXVA)
+    return -1;  // invalid virtual address
+  pte_t *pte = walk(pagetable, va, 1);
+  if(pte == 0)
+    return -1;  // walk failed
+  if(*pte & PTE_V)
+    return -1;  // shouldn't remap
+  *pte = PA2PTE(pa) | perm | PTE_V;
+  return 0;
+}
+
+static int
+mapsuperpage(pagetable_t pagetable, uint64 va, uint64 pa, int perm)
+{
+  if (va >= MAXVA)
+    return -1;  // invalid virtual address
+  pte_t *pte = &pagetable[PX(2, va)];
+  if(*pte & PTE_V) {
+    pagetable = (pagetable_t)PTE2PA(*pte);
+  } else {
+    if((pagetable = (pde_t*)kalloc()) == 0)
+      return -1;  // kalloc failed
+    memset(pagetable, 0, PGSIZE);
+    *pte = PA2PTE(pagetable) | PTE_V;
+  }
+  pte = &pagetable[PX(1, va)];
+  if (*pte & PTE_V)
+    return -1;  // shouldn't remap
+  *pte = PA2PTE(pa) | perm | PTE_V;
+  return 0;
+}
+
 // add a mapping to the kernel page table.
 // only used when booting.
 // does not flush TLB or enable paging.
 void
 kvmmap(pagetable_t kpgtbl, uint64 va, uint64 pa, uint64 sz, int perm)
 {
-  if(mappages(kpgtbl, va, sz, pa, perm) != 0)
-    panic("kvmmap");
+  if(sz == 0)
+    panic("kvmmap: size");
+
+  uint64 a = PGROUNDDOWN(va);
+  uint64 last = PGROUNDDOWN(va + sz - 1);
+  while(a <= last){
+    if (IS_ALIGNED_SPG(a)
+        && IS_ALIGNED_SPG(pa)
+        && a + SPGSIZE <= last) {
+      if (mapsuperpage(kpgtbl, a, pa,perm) == -1)
+        panic("kvmap: mapsuperpage");
+      a += SPGSIZE;
+      pa += SPGSIZE;
+    } else {
+      if (mappage(kpgtbl, a, pa, perm) == -1)
+        panic("kvmap: mappage");
+      a += PGSIZE;
+      pa += PGSIZE;
+    }
+  }
 }
 
 // Create PTEs for virtual addresses starting at va that refer to
@@ -143,21 +198,14 @@ int
 mappages(pagetable_t pagetable, uint64 va, uint64 size, uint64 pa, int perm)
 {
   uint64 a, last;
-  pte_t *pte;
-
   if(size == 0)
     panic("mappages: size");
-  
+
   a = PGROUNDDOWN(va);
   last = PGROUNDDOWN(va + size - 1);
-  for(;;){
-    if((pte = walk(pagetable, a, 1)) == 0)
+  while(a <= last){
+    if (mappage(pagetable, a, pa, perm) == -1)
       return -1;
-    if(*pte & PTE_V)
-      panic("mappages: remap");
-    *pte = PA2PTE(pa) | perm | PTE_V;
-    if(a == last)
-      break;
     a += PGSIZE;
     pa += PGSIZE;
   }

@@ -158,7 +158,8 @@ UPROGS=\
 	$U/_zombie\
 	$U/_pingpong\
 	$U/_free\
-	$U/_grow1
+	$U/_grow1\
+	$U/_showpt
 
 fs.img: mkfs/mkfs README $(UPROGS)
 	mkfs/mkfs fs.img README $(UPROGS)

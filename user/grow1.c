@@ -5,7 +5,7 @@ int
 main(void)
 {
     printf("page table before\n");
-    showpt();
+    showpt(0);
     char *addr = sbrk(1);
     printf("memory %p:\n", addr);
     for (int i=0; i < 64; i++)
@@ -13,6 +13,6 @@ main(void)
 
     printf("\n");
     printf("page table after\n");
-    showpt();
+    showpt(0);
     return 0;
 }

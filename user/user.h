@@ -23,7 +23,7 @@ char* sbrk(int);
 int sleep(int);
 int uptime(void);
 int freemem(void);
-int showpt(void);
+int showpt(int show_kernel);
 
 // ulib.c
 int stat(const char*, struct stat*);

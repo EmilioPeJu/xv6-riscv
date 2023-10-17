@@ -93,6 +93,12 @@ sys_uptime(void)
 uint64
 sys_showpt(void)
 {
-  show_page_table();
+  int show_kernel;
+  argint(0, &show_kernel);
+  if (show_kernel)
+    show_kernel_page_table();
+  else
+    show_proc_page_table();
+
   return 0;
 }
