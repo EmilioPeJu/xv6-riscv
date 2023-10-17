@@ -14,5 +14,5 @@ main(void)
     printf("\n");
     printf("page table after\n");
     showpt();
-    exit(0);
+    return 0;
 }

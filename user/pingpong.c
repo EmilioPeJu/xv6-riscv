@@ -34,5 +34,5 @@ main(void)
         printf("%d\n", ITERATIONS / (uptime() - up1));
     }
 
-    exit(0);
+    return 0;
 }

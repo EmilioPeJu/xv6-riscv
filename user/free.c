@@ -5,5 +5,5 @@ int
 main(void)
 {
     printf("%d\n", freemem());
-    exit(0);
+    return 0;
 }
