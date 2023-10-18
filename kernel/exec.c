@@ -19,8 +19,8 @@ int flags2perm(int flags)
     return perm;
 }
 
-int
-exec(char *path, char **argv)
+static int
+exec_elf(char *path, char **argv)
 {
   char *s, *last;
   int i, off;
@@ -31,10 +31,7 @@ exec(char *path, char **argv)
   pagetable_t pagetable = 0, oldpagetable;
   struct proc *p = myproc();
 
-  begin_op();
-
   if((ip = namei(path)) == 0){
-    end_op();
     return -1;
   }
   ilock(ip);
@@ -69,7 +66,6 @@ exec(char *path, char **argv)
       goto bad;
   }
   iunlockput(ip);
-  end_op();
   ip = 0;
 
   p = myproc();
@@ -135,9 +131,60 @@ exec(char *path, char **argv)
     proc_freepagetable(pagetable, sz);
   if(ip){
     iunlockput(ip);
-    end_op();
   }
   return -1;
+}
+
+static int
+exec_script(char *path, char *interp_path, char **argv)
+{
+  char *new_argv[MAXARG];
+  new_argv[0] = interp_path;
+  int got_all_args = 0;
+  for (int i=0; i < MAXARG - 1; i++) {
+    new_argv[i + 1] = argv[i];
+    if (argv[i] == 0) {
+      got_all_args = 1;
+      break;
+    }
+  }
+
+  if (!got_all_args) {
+    return -1;
+  }
+
+  return exec_elf(interp_path, new_argv);
+}
+
+int
+exec(char *path, char **argv)
+{
+  struct inode *ip;
+  char start[128];
+  int nread;
+  if((ip = namei(path)) == 0) {
+    return -1;
+  }
+
+  ilock(ip);
+  nread = readi(ip, 0, (uint64)&start, 0, sizeof(start) - 1);
+  iunlockput(ip);
+  if (nread < 0)
+    return -1;
+
+  // make sure the string ends
+  start[nread] = 0;
+  if (nread > 1 && start[0] == '#' && start[1] == '!') {
+    // detected shebang
+    // make shebang a null-terminated string
+    char *ptr = &start[2];
+    while (*ptr && *ptr != 10)
+      ptr++;
+    *ptr = 0;
+    return exec_script(path, &start[2], argv);
+  } else {
+    return exec_elf(path, argv);
+  }
 }
 
 // Load a program segment into pagetable at virtual address va.

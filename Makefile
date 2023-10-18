@@ -159,7 +159,8 @@ UPROGS=\
 	$U/_pingpong\
 	$U/_free\
 	$U/_grow1\
-	$U/_showpt
+	$U/_showpt\
+	$U/sayhi.sh
 
 fs.img: mkfs/mkfs README $(UPROGS)
 	mkfs/mkfs fs.img README $(UPROGS)

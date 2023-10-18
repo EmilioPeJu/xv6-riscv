@@ -461,7 +461,9 @@ sys_exec(void)
       goto bad;
   }
 
+  begin_op();
   int ret = exec(path, argv);
+  end_op();
 
   for(i = 0; i < NELEM(argv) && argv[i] != 0; i++)
     kfree(argv[i]);
