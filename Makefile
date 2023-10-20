@@ -118,6 +118,9 @@ _%: %.o $(ULIB)
 	$(OBJDUMP) -S $@ > $*.asm
 	$(OBJDUMP) -t $@ | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > $*.sym
 
+_%.sh: %.sh
+	cp $^ $@
+
 $U/usys.S : $U/usys.pl
 	perl $U/usys.pl > $U/usys.S
 
@@ -160,7 +163,7 @@ UPROGS=\
 	$U/_free\
 	$U/_grow1\
 	$U/_showpt\
-	$U/sayhi.sh
+	$U/_sayhi.sh
 
 fs.img: mkfs/mkfs README $(UPROGS)
 	mkfs/mkfs fs.img README $(UPROGS)
