@@ -26,9 +26,9 @@ exec_elf(char *path, char **argv)
   int i, off;
   uint64 argc, sz = 0, sp, ustack[MAXARG], stackbase;
   struct elfhdr elf;
-  struct inode *ip;
+  struct inode *ip = NULL;
   struct proghdr ph;
-  pagetable_t pagetable = 0, oldpagetable;
+  pagetable_t pagetable = NULL, oldpagetable;
   struct proc *p = myproc();
 
   if((ip = namei(path)) == 0){
